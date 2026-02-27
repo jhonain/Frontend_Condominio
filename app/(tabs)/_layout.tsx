@@ -1,57 +1,90 @@
-import React from 'react';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Link, Tabs } from 'expo-router';
-import { Pressable } from 'react-native';
-
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
-import { useClientOnlyValue } from '@/components/useClientOnlyValue';
-
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
-  color: string;
-}) {
-  return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
-}
+import { Tabs } from "expo-router";
+import { Home, CreditCard, CalendarDays, Bell, User, LayoutDashboard, Building2, Car } from "lucide-react-native";
+import React from "react";
+import { Platform } from "react-native";
+import { useAuth } from "@/context/AuthContext";
+import Colors from "@/constants/Colors";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+
+  const { rol } = useAuth();
+
+  const isAdmin = rol === 'ADMIN';
+  const isResident = rol === 'RESIDENTE';
+  const isSecurity = rol === 'SEGURIDAD';
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
-      }}>
+        tabBarActiveTintColor: Colors.primary,
+        tabBarInactiveTintColor: Colors.textLight,
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: Colors.surface,
+          borderTopColor: Colors.border,
+          paddingTop: 8,
+          height: Platform.OS === 'ios' ? 88 : 70,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+          marginTop: 4,
+        },
+      }}
+    >
       <Tabs.Screen
-        name="index"
+        name="(home)"
         options={{
-          title: 'Tab One',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
+          title: isAdmin ? "Dashboard" : "Inicio",
+          tabBarIcon: ({ color, size }) =>
+            isAdmin ? <LayoutDashboard color={color} size={size} /> : <Home color={color} size={size} />,
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="condominiums"
         options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+          title: "Condominios",
+          tabBarIcon: ({ color, size }) => <Building2 color={color} size={size} />,
+          href: isAdmin ? undefined : null,
+        }}
+      />
+      <Tabs.Screen
+        name="payments"
+        options={{
+          title: "Pagos",
+          tabBarIcon: ({ color, size }) => <CreditCard color={color} size={size} />,
+          href: (isAdmin || isResident) ? undefined : null,
+        }}
+      />
+      <Tabs.Screen
+        name="reservations"
+        options={{
+          title: "Reservas",
+          tabBarIcon: ({ color, size }) => <CalendarDays color={color} size={size} />,
+          href: isResident ? undefined : null,
+        }}
+      />
+
+      <Tabs.Screen
+        name="vehicles"
+        options={{
+          title: "Vehículos",
+          tabBarIcon: ({ color, size }) => <Car color={color} size={size} />,
+          href: isSecurity ? undefined : null,
+        }}
+      />
+      <Tabs.Screen
+        name="announcements"
+        options={{
+          title: "Avisos",
+          tabBarIcon: ({ color, size }) => <Bell color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Perfil",
+          tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
         }}
       />
     </Tabs>
