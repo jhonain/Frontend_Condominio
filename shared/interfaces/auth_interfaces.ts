@@ -10,6 +10,7 @@ export interface LoginResponse {
 }
 
 export interface JwtPayload {
+    userId: number; // Suponiendo que el ID viene aquí
     rol: RolType;
     sub: string;
     iat: number;

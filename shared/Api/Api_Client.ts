@@ -3,10 +3,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
 export const apiClient = axios.create({
-  baseURL: "https://isodiametric-gage-subchronically.ngrok-free.dev/api",
+  baseURL: "http://192.168.137.1:8083/api",
   headers: {
     'ngrok-skip-browser-warning': 'true',
-    "Content-Type": "application/json",
   },
   timeout: 10000,
 });

@@ -11,8 +11,9 @@ export interface Usuario {
 }
 
 export interface UsuarioSession {
+    id: number;
     username: string;
     roles: RolType[]; // lo hacemos array para reutilizar tu modelo
-}   
+}
 
-export interface PersonaUserDTO extends Persona, Usuario {}
+export interface PersonaUserDTO extends Persona, Usuario { }

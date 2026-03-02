@@ -25,3 +25,8 @@ export const getPersonasService = async (): Promise<any[]> => {
   const response = await apiClient.get('/personas');
   return response.data.content;
 };
+
+export const getPersonaByIdService = async (personaId: number): Promise<any> => {
+  const response = await apiClient.get(`/personas/${personaId}`);
+  return response.data;
+};

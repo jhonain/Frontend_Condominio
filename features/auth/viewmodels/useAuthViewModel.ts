@@ -23,12 +23,15 @@ export const useAuthViewModel = () => {
       // ← Decodifica el JWT y extrae el rol
       const decoded = jwtDecode<JwtPayload>(token);
       const rol = decoded.rol; // "ADMIN", "RESIDENTE" o "SEGURIDAD"
+      const userId = decoded.userId; // ← Extracción del ID
 
       console.log("TOKEN:", token);
-      console.log("ROL:", rol); // para verificar en consola
+      console.log("ROL:", rol);
+      console.log("USER ID:", userId);
 
       // Creamos el objeto de sesión del usuario
       const userSession: UsuarioSession = {
+        id: userId,
         username: username,
         roles: [rol]
       };

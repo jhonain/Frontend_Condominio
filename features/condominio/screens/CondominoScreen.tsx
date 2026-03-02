@@ -1,4 +1,19 @@
-import { ArrowLeft, Building2, Check, Home, Layout, MapPin, Plus, Trash2, User, Users, X } from 'lucide-react-native';
+import {
+    ArrowLeft,
+    Building2,
+    Camera,
+    Check,
+    Clock,
+    Home,
+    Image as ImageIcon,
+    Layout,
+    MapPin,
+    Plus,
+    Trash2,
+    User,
+    Users,
+    X
+} from 'lucide-react-native';
 import React from 'react';
 import {
     ActivityIndicator,
@@ -16,10 +31,12 @@ import {
 } from 'react-native';
 
 import Colors from '@/constants/Colors';
+import { useAuth } from '@/context/AuthContext';
 import { useCondominioViewModel } from '../viewmodels/UseRegisterCondominioViewModel';
 
 export default function CondominioScreen() {
     const vm = useCondominioViewModel();
+    const { isAdmin } = useAuth();
 
     if (vm.isLoading) {
         return (
@@ -52,13 +69,15 @@ export default function CondominioScreen() {
                         contentContainerStyle={styles.unitsScrollContent}
                         showsVerticalScrollIndicator={false}
                     >
-                        <TouchableOpacity
-                            style={styles.addUnitButton}
-                            onPress={() => vm.handleAddUnits(vm.selectedCondo!.id)}
-                        >
-                            <Plus size={20} color={Colors.primary} />
-                            <Text style={styles.addUnitText}>Agregar Nueva Unidad</Text>
-                        </TouchableOpacity>
+                        {isAdmin && (
+                            <TouchableOpacity
+                                style={styles.addUnitButton}
+                                onPress={() => vm.handleAddUnits(vm.selectedCondo!.id)}
+                            >
+                                <Plus size={20} color={Colors.primary} />
+                                <Text style={styles.addUnitText}>Agregar Nueva Unidad</Text>
+                            </TouchableOpacity>
+                        )}
 
                         {vm.selectedCondo.unidades && vm.selectedCondo.unidades.length > 0 ? (
                             vm.selectedCondo.unidades.map((unidad) => (
@@ -91,7 +110,7 @@ export default function CondominioScreen() {
                                                 <Text style={styles.unitPriceLabel}>Mensualidad</Text>
                                                 <Text style={styles.unitPriceValue}>S/ {unidad.precioMensual}</Text>
                                             </View>
-                                            {unidad.estado === 'DISPONIBLE' && (
+                                            {isAdmin && unidad.estado === 'DISPONIBLE' && (
                                                 <TouchableOpacity
                                                     style={styles.assignSmallButton}
                                                     onPress={() => vm.handleOpenAssign(unidad.id)}
@@ -150,14 +169,16 @@ export default function CondominioScreen() {
                     >
                         {vm.activeTab === 'condominiums' ? (
                             <>
-                                <TouchableOpacity
-                                    style={styles.addCard}
-                                    onPress={() => vm.setShowCondoForm(true)}
-                                    activeOpacity={0.7}
-                                >
-                                    <Plus size={20} color={Colors.primary} />
-                                    <Text style={styles.addCardText}>Registrar Condominio</Text>
-                                </TouchableOpacity>
+                                {isAdmin && (
+                                    <TouchableOpacity
+                                        style={styles.addCard}
+                                        onPress={() => vm.setShowCondoForm(true)}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Plus size={20} color={Colors.primary} />
+                                        <Text style={styles.addCardText}>Registrar Condominio</Text>
+                                    </TouchableOpacity>
+                                )}
 
                                 {vm.condominiums.length > 0 ? (
                                     vm.condominiums.map((condo) => (
@@ -203,27 +224,29 @@ export default function CondominioScreen() {
                                                         <Text style={styles.metaText}>{condo.unidades?.length ?? 0} registradas</Text>
                                                     </View>
 
-                                                    <View style={styles.actionButtons}>
-                                                        <TouchableOpacity
-                                                            onPress={(e) => {
-                                                                e.stopPropagation();
-                                                                vm.handleAddUnits(condo.id);
-                                                            }}
-                                                            style={styles.actionButton}
-                                                        >
-                                                            <Plus size={18} color={Colors.primary} />
-                                                        </TouchableOpacity>
+                                                    {isAdmin && (
+                                                        <View style={styles.actionButtons}>
+                                                            <TouchableOpacity
+                                                                onPress={(e) => {
+                                                                    e.stopPropagation();
+                                                                    vm.handleAddUnits(condo.id);
+                                                                }}
+                                                                style={styles.actionButton}
+                                                            >
+                                                                <Plus size={18} color={Colors.primary} />
+                                                            </TouchableOpacity>
 
-                                                        <TouchableOpacity
-                                                            onPress={(e) => {
-                                                                e.stopPropagation();
-                                                                vm.handleDeleteCondo(condo.id);
-                                                            }}
-                                                            style={styles.actionButton}
-                                                        >
-                                                            <Trash2 size={16} color={Colors.error} />
-                                                        </TouchableOpacity>
-                                                    </View>
+                                                            <TouchableOpacity
+                                                                onPress={(e) => {
+                                                                    e.stopPropagation();
+                                                                    vm.handleDeleteCondo(condo.id);
+                                                                }}
+                                                                style={styles.actionButton}
+                                                            >
+                                                                <Trash2 size={16} color={Colors.error} />
+                                                            </TouchableOpacity>
+                                                        </View>
+                                                    )}
                                                 </View>
                                             </View>
                                         </TouchableOpacity>
@@ -237,31 +260,51 @@ export default function CondominioScreen() {
                             </>
                         ) : (
                             <>
-                                <TouchableOpacity
-                                    style={styles.addCard}
-                                    onPress={() => vm.setShowAreaForm(true)}
-                                    activeOpacity={0.7}
-                                >
-                                    <Plus size={20} color={Colors.primary} />
-                                    <Text style={styles.addCardText}>Registrar Área Común</Text>
-                                </TouchableOpacity>
+                                {isAdmin && (
+                                    <TouchableOpacity
+                                        style={styles.addCard}
+                                        onPress={() => vm.setShowAreaForm(true)}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Plus size={20} color={Colors.primary} />
+                                        <Text style={styles.addCardText}>Registrar Área Común</Text>
+                                    </TouchableOpacity>
+                                )}
 
                                 {vm.commonAreas.length > 0 ? (
                                     vm.commonAreas.map((area) => (
                                         <View key={area.id} style={styles.condoCard}>
-                                            <Image source={{ uri: area.image }} style={styles.condoImage} />
+                                            {area.imagenUrl ? (
+                                                <Image source={{ uri: area.imagenUrl }} style={styles.condoImage} />
+                                            ) : (
+                                                <View style={[styles.condoImage, { backgroundColor: Colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' }]}>
+                                                    <Home size={48} color={Colors.textLight} />
+                                                </View>
+                                            )}
                                             <View style={styles.condoInfo}>
-                                                <Text style={styles.condoName}>{area.name}</Text>
-                                                <Text style={styles.areaDescription} numberOfLines={2}>{area.description}</Text>
+                                                <View style={styles.condoHeader}>
+                                                    <Text style={styles.condoName}>{area.nombre}</Text>
+                                                    <View style={[styles.statusBadge, { backgroundColor: 'rgba(34, 197, 94, 0.1)' }]}>
+                                                        <Text style={[styles.statusText, { color: Colors.success }]}>{area.estado}</Text>
+                                                    </View>
+                                                </View>
+                                                <Text style={styles.areaDescription} numberOfLines={2}>{area.descripcion}</Text>
                                                 <View style={styles.condoMeta}>
                                                     <View style={styles.metaItem}>
                                                         <Users size={14} color={Colors.primary} />
-                                                        <Text style={styles.metaText}>Cap: {area.capacity}</Text>
+                                                        <Text style={styles.metaText}>Cap: {area.capacidad}</Text>
                                                     </View>
-                                                    <Text style={styles.metaText}>{area.availableSlots.length} horarios</Text>
-                                                    <TouchableOpacity onPress={() => vm.handleDeleteArea(area.id)}>
-                                                        <Trash2 size={16} color={Colors.error} />
-                                                    </TouchableOpacity>
+                                                    <View style={styles.metaItem}>
+                                                        <Clock size={14} color={Colors.primary} />
+                                                        <Text style={styles.metaText}>{area.horarios.length} horarios</Text>
+                                                    </View>
+                                                    {isAdmin && (
+                                                        <View style={styles.actionButtons}>
+                                                            <TouchableOpacity onPress={() => vm.handleDeleteArea(area.id)}>
+                                                                <Trash2 size={16} color={Colors.error} />
+                                                            </TouchableOpacity>
+                                                        </View>
+                                                    )}
                                                 </View>
                                             </View>
                                         </View>
@@ -296,6 +339,33 @@ export default function CondominioScreen() {
                             </TouchableOpacity>
                         </View>
                         <ScrollView showsVerticalScrollIndicator={false}>
+                            {/* Selector de Imagen */}
+                            <View style={styles.imagePickerContainer}>
+                                <Text style={styles.fieldLabel}>Imagen del Condominio</Text>
+                                {vm.condoImage ? (
+                                    <View style={styles.imagePreviewContainer}>
+                                        <Image source={{ uri: vm.condoImage }} style={styles.imagePreview} />
+                                        <TouchableOpacity
+                                            style={styles.removeImageBtn}
+                                            onPress={() => vm.resetCondoForm()}
+                                        >
+                                            <X size={16} color="#FFFFFF" />
+                                        </TouchableOpacity>
+                                    </View>
+                                ) : (
+                                    <View style={styles.imagePickerOptions}>
+                                        <TouchableOpacity style={styles.imagePickerBtn} onPress={vm.pickImage}>
+                                            <ImageIcon size={24} color={Colors.primary} />
+                                            <Text style={styles.imagePickerBtnText}>Galería</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity style={styles.imagePickerBtn} onPress={vm.takePhoto}>
+                                            <Camera size={24} color={Colors.primary} />
+                                            <Text style={styles.imagePickerBtnText}>Cámara</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+                            </View>
+
                             <View style={styles.formField}>
                                 <Text style={styles.fieldLabel}>Nombre *</Text>
                                 <TextInput
@@ -363,6 +433,29 @@ export default function CondominioScreen() {
                         </View>
                         <ScrollView showsVerticalScrollIndicator={false}>
                             <View style={styles.formField}>
+                                <Text style={styles.fieldLabel}>Condominio *</Text>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.condoSelector}>
+                                    {vm.condominiums.map((condo) => (
+                                        <TouchableOpacity
+                                            key={condo.id}
+                                            style={[
+                                                styles.condoSelectItem,
+                                                vm.areaCondoId === condo.id && styles.condoSelectItemSelected
+                                            ]}
+                                            onPress={() => vm.setAreaCondoId(condo.id)}
+                                        >
+                                            <Text style={[
+                                                styles.condoSelectItemText,
+                                                vm.areaCondoId === condo.id && styles.condoSelectItemTextSelected
+                                            ]}>
+                                                {condo.nombre}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            </View>
+
+                            <View style={styles.formField}>
                                 <Text style={styles.fieldLabel}>Nombre *</Text>
                                 <TextInput
                                     style={styles.fieldInput}
@@ -393,6 +486,40 @@ export default function CondominioScreen() {
                                     onChangeText={vm.setAreaCapacity}
                                     keyboardType="numeric"
                                 />
+                            </View>
+
+                            <View style={styles.formField}>
+                                <View style={styles.sectionHeader}>
+                                    <Text style={styles.fieldLabel}>Horarios</Text>
+                                    <TouchableOpacity onPress={vm.handleAddHorario} style={styles.addHorarioBtn}>
+                                        <Plus size={16} color={Colors.primary} />
+                                        <Text style={styles.addHorarioText}>Agregar</Text>
+                                    </TouchableOpacity>
+                                </View>
+
+                                {vm.areaHorarios.map((horario, index) => (
+                                    <View key={index} style={styles.horarioRow}>
+                                        <TextInput
+                                            style={[styles.fieldInput, styles.horarioInput]}
+                                            placeholder="09:00"
+                                            value={horario.horaInicio}
+                                            onChangeText={(val) => vm.handleUpdateHorario(index, 'horaInicio', val)}
+                                        />
+                                        <Text style={styles.horarioSeparator}>a</Text>
+                                        <TextInput
+                                            style={[styles.fieldInput, styles.horarioInput]}
+                                            placeholder="12:00"
+                                            value={horario.horaFin}
+                                            onChangeText={(val) => vm.handleUpdateHorario(index, 'horaFin', val)}
+                                        />
+                                        <TouchableOpacity
+                                            onPress={() => vm.handleRemoveHorario(index)}
+                                            style={styles.removeHorarioBtn}
+                                        >
+                                            <Trash2 size={16} color={Colors.error} />
+                                        </TouchableOpacity>
+                                    </View>
+                                ))}
                             </View>
                             <TouchableOpacity
                                 style={[styles.submitButton, (!vm.isAreaFormValid || vm.isAddingArea) && styles.submitButtonDisabled]}
@@ -510,7 +637,7 @@ export default function CondominioScreen() {
                             </TouchableOpacity>
                         </View>
 
-                        <View style={[styles.formField, { flex: 1 }]}>
+                        <View style={[styles.formField, { flex: 0 }]}>
                             <Text style={styles.fieldLabel}>Residente *</Text>
                             {vm.isLoadingPersonas ? (
                                 <ActivityIndicator color={Colors.primary} style={{ marginTop: 20 }} />
@@ -568,6 +695,29 @@ export default function CondominioScreen() {
                             </View>
                         </View>
 
+                        <View style={styles.dateRow}>
+                            <View style={[styles.formField, { flex: 1, marginRight: 10 }]}>
+                                <Text style={styles.fieldLabel}>Fecha Inicio *</Text>
+                                <TextInput
+                                    style={styles.fieldInput}
+                                    placeholder="YYYY-MM-DD"
+                                    placeholderTextColor={Colors.textLight}
+                                    value={vm.assignFechaInicio}
+                                    onChangeText={vm.setAssignFechaInicio}
+                                />
+                            </View>
+                            <View style={[styles.formField, { flex: 1 }]}>
+                                <Text style={styles.fieldLabel}>Fecha Fin (Opcional)</Text>
+                                <TextInput
+                                    style={styles.fieldInput}
+                                    placeholder="YYYY-MM-DD"
+                                    placeholderTextColor={Colors.textLight}
+                                    value={vm.assignFechaFin}
+                                    onChangeText={vm.setAssignFechaFin}
+                                />
+                            </View>
+                        </View>
+
                         <TouchableOpacity
                             style={[styles.submitButton, (!vm.selectedPersonaId || vm.isAssigning) && styles.submitButtonDisabled]}
                             onPress={vm.handleAssignPersona}
@@ -590,6 +740,11 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: Colors.background,
+    },
+    dateRow: {
+        flexDirection: 'row',
+        gap: 10,
+        marginBottom: 8,
     },
     loadingContainer: {
         flex: 1,
@@ -933,41 +1088,47 @@ const styles = StyleSheet.create({
         marginTop: 4,
     },
     personaList: {
-        maxHeight: 250,
+        maxHeight: 320,
         backgroundColor: Colors.surfaceAlt,
-        borderRadius: 12,
-        padding: 8,
+        borderRadius: 16,
+        padding: 4,
+        marginTop: 4,
     },
     personaItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 12,
-        borderRadius: 10,
-        marginBottom: 4,
-        gap: 12,
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        borderRadius: 12,
+        marginBottom: 8,
+        gap: 14,
+        backgroundColor: Colors.surface,
+        borderWidth: 1,
+        borderColor: 'transparent',
     },
     personaItemSelected: {
         backgroundColor: Colors.primary,
     },
     personaAvatar: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         backgroundColor: 'rgba(0,0,0,0.05)',
         alignItems: 'center',
         justifyContent: 'center',
     },
     personaName: {
-        fontSize: 14,
-        fontWeight: '600' as const,
+        fontSize: 16,
+        fontWeight: '700' as const,
         color: Colors.text,
     },
     personaNameSelected: {
         color: Colors.surface,
     },
     personaEmail: {
-        fontSize: 12,
+        fontSize: 14,
         color: Colors.textSecondary,
+        marginTop: 2,
     },
     personaEmailSelected: {
         color: 'rgba(255,255,255,0.8)',
@@ -997,4 +1158,115 @@ const styles = StyleSheet.create({
     roleTabTextActive: {
         color: Colors.surface,
     },
+    // Nuevos estilos para Áreas Comunes
+    condoSelector: {
+        flexDirection: 'row',
+        marginBottom: 8,
+    },
+    condoSelectItem: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+        backgroundColor: Colors.surfaceAlt,
+        marginRight: 8,
+        borderWidth: 1,
+        borderColor: Colors.border,
+    },
+    condoSelectItemSelected: {
+        backgroundColor: Colors.primary,
+        borderColor: Colors.primary,
+    },
+    condoSelectItemText: {
+        fontSize: 13,
+        color: Colors.textSecondary,
+        fontWeight: '600' as const,
+    },
+    condoSelectItemTextSelected: {
+        color: Colors.surface,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    addHorarioBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    addHorarioText: {
+        fontSize: 13,
+        color: Colors.primary,
+        fontWeight: '600' as const,
+    },
+    horarioRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 8,
+    },
+    horarioInput: {
+        flex: 1,
+        textAlign: 'center',
+        paddingVertical: 8,
+    },
+    horarioSeparator: {
+        fontSize: 14,
+        color: Colors.textSecondary,
+    },
+    removeHorarioBtn: {
+        padding: 8,
+    },
+    // Estilos para Image Picker
+    imagePickerContainer: {
+        marginBottom: 24,
+    },
+    imagePickerOptions: {
+        flexDirection: 'row',
+        gap: 12,
+        marginTop: 8,
+    },
+    imagePickerBtn: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        backgroundColor: 'rgba(20, 184, 166, 0.05)',
+        borderRadius: 12,
+        paddingVertical: 14,
+        borderWidth: 1,
+        borderColor: Colors.border,
+        borderStyle: 'dashed',
+    },
+    imagePickerBtnText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: Colors.textSecondary,
+    },
+    imagePreviewContainer: {
+        position: 'relative',
+        marginTop: 8,
+        borderRadius: 16,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: Colors.border,
+    },
+    imagePreview: {
+        width: '100%',
+        height: 180,
+    },
+    removeImageBtn: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        width: 30,
+        height: 30,
+        borderRadius: 15,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
 });
+

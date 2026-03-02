@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Paf-Condominio",
+    "name": "Domus",
     "slug": "Paf-Condominio",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -17,14 +17,14 @@
       "supportsTablet": true
     },
     "android": {
-
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.PafCondominio"
+      "package": "com.anonymous.PafCondominio",
+      "usesCleartextTraffic": true
     },
     "web": {
       "bundler": "metro",

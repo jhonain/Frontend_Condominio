@@ -1,8 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { RolType } from "../shared/interfaces"; // ← interfaz que creaste
-import { UsuarioSession } from "../shared/interfaces";
 import { goToLogin } from "@/navigation/routes";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { RolType, UsuarioSession } from "../shared/interfaces"; // ← interfaz que creaste
 
 // 1. Tipos
 type AuthContextType = {
@@ -29,8 +28,8 @@ const AuthContext = createContext<AuthContextType>({
   isAdmin: false,
   isResident: false,
   isSecurity: false,
-  login: async () => {},
-  logout: async () => {},
+  login: async () => { },
+  logout: async () => { },
 });
 
 // 3. Provider
@@ -42,7 +41,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Al arrancar la app, carga token Y rol guardados
   useEffect(() => {
-const loadSession = async () => {
+    const loadSession = async () => {
       try {
         const savedToken = await AsyncStorage.getItem("jwt_token");
         const savedUser = await AsyncStorage.getItem("jwt_user");
@@ -73,13 +72,23 @@ const loadSession = async () => {
 
   // Borrar token + rol al hacer logout
   const logout = async () => {
-    await AsyncStorage.removeItem("jwt_token");
-    await AsyncStorage.removeItem("jwt_rol");
-    await AsyncStorage.removeItem("jwt_user");
-    setToken(null);
-    setRol(null);
-    setUser(null);
-    goToLogin();
+    console.log("AuthProvider: Iniciando proceso de logout...");
+    try {
+      await AsyncStorage.removeItem("jwt_token");
+      await AsyncStorage.removeItem("jwt_rol");
+      await AsyncStorage.removeItem("jwt_user");
+      console.log("AuthProvider: AsyncStorage limpiado.");
+
+      setToken(null);
+      setRol(null);
+      setUser(null);
+      console.log("AuthProvider: Estado local limpiado.");
+
+      goToLogin();
+      console.log("AuthProvider: Redirigiendo a Login...");
+    } catch (error) {
+      console.error("AuthProvider: Error durante el logout:", error);
+    }
   };
 
   const isAuthenticated = !!token && !!user;
@@ -88,7 +97,7 @@ const loadSession = async () => {
   const isResident = role === "RESIDENTE";
   const isSecurity = role === "SEGURIDAD";
 
- return (
+  return (
     <AuthContext.Provider
       value={{
         user,

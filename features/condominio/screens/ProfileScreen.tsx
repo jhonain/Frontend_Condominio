@@ -1,19 +1,23 @@
 import { useRouter } from 'expo-router';
 import {
     Bell,
+    Building2,
     Car,
     ChevronRight,
+    DoorOpen,
     FileText,
     HelpCircle,
     Lock,
     LogOut,
     Mail,
+    Phone,
     Settings,
-    Shield,
     User
 } from 'lucide-react-native';
 import React from 'react';
 import {
+    ActivityIndicator,
+    RefreshControl,
     ScrollView,
     StyleSheet,
     Text,
@@ -48,12 +52,20 @@ interface MenuItem {
 
 export default function ProfileScreen() {
     const vm = useProfileViewModel();
-    const { rol, isResident } = useAuth();
+    const { rol } = useAuth();
     const router = useRouter();
+
+    if (vm.isLoading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={Colors.primary} />
+            </View>
+        );
+    }
 
     const menuSections: { title: string; items: MenuItem[] }[] = [
         {
-            title: 'Cuenta',
+            title: 'CUENTA',
             items: [
                 {
                     id: '1',
@@ -75,15 +87,17 @@ export default function ProfileScreen() {
                 },
             ],
         },
-        ...(isResident
+        ...((vm.isResident || rol === 'ADMIN' || rol === 'SEGURIDAD')
             ? [
                 {
-                    title: 'Mis Vehículos',
+                    title: (rol === 'ADMIN' || rol === 'SEGURIDAD') ? 'GESTIÓN DE VEHÍCULOS' : 'MIS VEHÍCULOS',
                     items: [
                         {
                             id: 'vehicles',
                             title: 'Gestionar Vehículos',
-                            subtitle: 'Registrar y administrar tus vehículos',
+                            subtitle: (rol === 'ADMIN' || rol === 'SEGURIDAD')
+                                ? 'Ver y administrar vehículos del condominio'
+                                : 'Registrar y administrar tus vehículos',
                             icon: <Car size={20} color={Colors.primary} />,
                             onPress: () => router.push('/vehicles' as never),
                         },
@@ -92,7 +106,7 @@ export default function ProfileScreen() {
             ]
             : []),
         {
-            title: 'Soporte',
+            title: 'SOPORTE',
             items: [
                 {
                     id: '4',
@@ -107,18 +121,6 @@ export default function ProfileScreen() {
                 },
             ],
         },
-        {
-            title: '',
-            items: [
-                {
-                    id: '6',
-                    title: 'Cerrar Sesión',
-                    icon: <LogOut size={20} color={Colors.error} />,
-                    danger: true,
-                    onPress: vm.handleLogout,
-                },
-            ],
-        },
     ];
 
     const renderMenuItem = (item: MenuItem) => (
@@ -129,7 +131,9 @@ export default function ProfileScreen() {
             onPress={item.onPress}
         >
             <View style={styles.menuItemLeft}>
-                {item.icon}
+                <View style={styles.menuIconContainer}>
+                    {item.icon}
+                </View>
                 <View style={styles.menuItemInfo}>
                     <Text style={[styles.menuItemTitle, item.danger && styles.dangerText]}>
                         {item.title}
@@ -139,7 +143,7 @@ export default function ProfileScreen() {
                     )}
                 </View>
             </View>
-            {!item.danger && <ChevronRight size={20} color={Colors.textLight} />}
+            {!item.danger && <ChevronRight size={18} color={Colors.textLight} />}
         </TouchableOpacity>
     );
 
@@ -148,44 +152,131 @@ export default function ProfileScreen() {
             style={styles.container}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+                <RefreshControl
+                    refreshing={vm.isRefreshing}
+                    onRefresh={vm.refresh}
+                    colors={[Colors.primary]}
+                    tintColor={Colors.primary}
+                />
+            }
         >
             <View style={styles.profileHeader}>
-                <View style={styles.avatarContainer}>
-                    <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                        <User size={48} color={Colors.textLight} />
+                <View style={styles.avatarWrapper}>
+                    <View style={styles.avatarContainer}>
+                        <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                            {vm.residentData?.nombreCompleto ? (
+                                <Text style={styles.avatarText}>{vm.residentData.nombreCompleto.charAt(0)}</Text>
+                            ) : (
+                                <User size={48} color={Colors.textLight} />
+                            )}
+                        </View>
+                        <View style={styles.editAvatarBadge}>
+                            <User size={14} color="#FFFFFF" />
+                        </View>
                     </View>
                 </View>
-                <Text style={styles.userName}>{vm.user?.username.split('@')[0] ?? 'Usuario'}</Text>
-                <Text style={styles.userEmail}>{vm.user?.username ?? ''}</Text>
-                <View style={[styles.roleChip, { backgroundColor: rol ? roleBadgeColors[rol] : Colors.textLight }]}>
-                    {rol === 'ADMIN' ? (
-                        <Shield size={14} color="#FFFFFF" />
-                    ) : rol === 'SEGURIDAD' ? (
-                        <Shield size={14} color="#FFFFFF" />
-                    ) : (
-                        <User size={14} color="#FFFFFF" />
-                    )}
-                    <Text style={styles.roleChipText}>{rol ? roleLabels[rol] : 'Usuario'}</Text>
-                </View>
+
+                <Text style={styles.userName}>
+                    {vm.isResident
+                        ? (vm.residentData?.nombreCompleto || vm.user?.username.split('@')[0])
+                        : (vm.personaData ? `${vm.personaData.nombre} ${vm.personaData.apellidos}` : vm.user?.username.split('@')[0])
+                    }
+                </Text>
+                <Text style={styles.userEmail}>
+                    {vm.isResident
+                        ? (vm.residentData?.email || vm.user?.username || '')
+                        : (vm.personaData?.email || vm.user?.username || '')
+                    }
+                </Text>
+
+                {rol && (
+                    <View style={[styles.roleChip, { backgroundColor: roleBadgeColors[rol] }]}>
+                        <User size={14} color="#FFFFFF" strokeWidth={3} />
+                        <Text style={styles.roleChipText}>{roleLabels[rol]}</Text>
+                    </View>
+                )}
             </View>
 
-            <View style={styles.infoCard}>
-                <View style={styles.infoRow}>
-                    <View style={styles.infoIconContainer}>
-                        <Mail size={18} color={Colors.primary} />
+            {vm.isResident && vm.residentData && (
+                <View style={styles.infoCard}>
+                    <View style={styles.infoItem}>
+                        <View style={[styles.infoIconBox, { backgroundColor: 'rgba(13, 148, 136, 0.1)' }]}>
+                            <Building2 size={20} color={Colors.primary} />
+                        </View>
+                        <View style={styles.infoRight}>
+                            <Text style={styles.infoLabel}>Condominio</Text>
+                            <Text style={styles.infoValue}>{vm.residentData.condominio?.nombre || '-'}</Text>
+                        </View>
                     </View>
-                    <View style={styles.infoContent}>
-                        <Text style={styles.infoLabel}>Correo Electrónico</Text>
-                        <Text style={styles.infoValue}>{vm.user?.username ?? '-'}</Text>
+
+                    <View style={styles.infoSeparator} />
+
+                    <View style={styles.infoItem}>
+                        <View style={[styles.infoIconBox, { backgroundColor: 'rgba(13, 148, 136, 0.1)' }]}>
+                            <DoorOpen size={20} color={Colors.primary} />
+                        </View>
+                        <View style={styles.infoRight}>
+                            <Text style={styles.infoLabel}>Unidad</Text>
+                            <Text style={styles.infoValue}>{vm.residentData.unidad?.codigo || '-'}</Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.infoSeparator} />
+
+                    <View style={styles.infoItem}>
+                        <View style={[styles.infoIconBox, { backgroundColor: 'rgba(13, 148, 136, 0.1)' }]}>
+                            <Phone size={20} color={Colors.primary} />
+                        </View>
+                        <View style={styles.infoRight}>
+                            <Text style={styles.infoLabel}>Teléfono</Text>
+                            <Text style={styles.infoValue}>{vm.residentData.telefono || '-'}</Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.infoSeparator} />
+
+                    <View style={styles.infoItem}>
+                        <View style={[styles.infoIconBox, { backgroundColor: 'rgba(13, 148, 136, 0.1)' }]}>
+                            <Mail size={20} color={Colors.primary} />
+                        </View>
+                        <View style={styles.infoRight}>
+                            <Text style={styles.infoLabel}>Correo</Text>
+                            <Text style={styles.infoValue}>{vm.residentData?.email || vm.user?.username || '-'}</Text>
+                        </View>
                     </View>
                 </View>
-            </View>
+            )}
+
+            {!vm.isResident && vm.personaData && (
+                <View style={styles.infoCard}>
+                    <View style={styles.infoItem}>
+                        <View style={[styles.infoIconBox, { backgroundColor: 'rgba(13, 148, 136, 0.1)' }]}>
+                            <Phone size={20} color={Colors.primary} />
+                        </View>
+                        <View style={styles.infoRight}>
+                            <Text style={styles.infoLabel}>Teléfono</Text>
+                            <Text style={styles.infoValue}>{vm.personaData.telefono || '-'}</Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.infoSeparator} />
+
+                    <View style={styles.infoItem}>
+                        <View style={[styles.infoIconBox, { backgroundColor: 'rgba(13, 148, 136, 0.1)' }]}>
+                            <Mail size={20} color={Colors.primary} />
+                        </View>
+                        <View style={styles.infoRight}>
+                            <Text style={styles.infoLabel}>Correo Electrónico</Text>
+                            <Text style={styles.infoValue}>{vm.personaData?.email || vm.user?.username || '-'}</Text>
+                        </View>
+                    </View>
+                </View>
+            )}
 
             {menuSections.map((section, sectionIndex) => (
                 <View key={sectionIndex} style={styles.menuSection}>
-                    {section.title !== '' && (
-                        <Text style={styles.sectionTitle}>{section.title}</Text>
-                    )}
+                    <Text style={styles.sectionTitle}>{section.title}</Text>
                     <View style={styles.menuCard}>
                         {section.items.map((item, index) => (
                             <View key={item.id}>
@@ -199,6 +290,11 @@ export default function ProfileScreen() {
                 </View>
             ))}
 
+            <TouchableOpacity style={styles.logoutCard} onPress={vm.handleLogout}>
+                <LogOut size={20} color={Colors.error} />
+                <Text style={styles.logoutText}>Cerrar Sesión</Text>
+            </TouchableOpacity>
+
             <Text style={styles.versionText}>Versión 1.0.0</Text>
         </ScrollView>
     );
@@ -207,170 +303,214 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.background,
+        backgroundColor: '#F8FAFC',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#F8FAFC',
     },
     scrollContent: {
         paddingBottom: 40,
     },
     profileHeader: {
         alignItems: 'center',
-        paddingVertical: 24,
+        paddingVertical: 32,
         paddingHorizontal: 20,
     },
-    avatarContainer: {
-        position: 'relative' as const,
+    avatarWrapper: {
         marginBottom: 16,
     },
+    avatarContainer: {
+        position: 'relative',
+    },
     avatar: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
+        width: 110,
+        height: 110,
+        borderRadius: 55,
         borderWidth: 4,
-        borderColor: Colors.surface,
+        borderColor: '#FFFFFF',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+        elevation: 5,
     },
     avatarPlaceholder: {
-        backgroundColor: Colors.surfaceAlt,
+        backgroundColor: '#E2E8F0',
         alignItems: 'center',
         justifyContent: 'center',
     },
-    editAvatarButton: {
-        position: 'absolute' as const,
-        bottom: 0,
-        right: 0,
-        width: 32,
-        height: 32,
-        borderRadius: 16,
+    avatarText: {
+        fontSize: 40,
+        fontWeight: '700',
+        color: Colors.primary,
+    },
+    editAvatarBadge: {
+        position: 'absolute',
+        bottom: 5,
+        right: 5,
+        width: 28,
+        height: 28,
+        borderRadius: 14,
         backgroundColor: Colors.primary,
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 3,
-        borderColor: Colors.background,
+        borderColor: '#FFFFFF',
     },
     userName: {
-        fontSize: 22,
-        fontWeight: '700' as const,
-        color: Colors.text,
+        fontSize: 24,
+        fontWeight: '800',
+        color: '#1E293B',
         marginBottom: 4,
     },
     userEmail: {
-        fontSize: 14,
-        color: Colors.textSecondary,
-        marginBottom: 10,
+        fontSize: 15,
+        color: '#64748B',
+        marginBottom: 14,
     },
     roleChip: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        paddingHorizontal: 14,
-        paddingVertical: 6,
-        borderRadius: 20,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 12,
     },
     roleChipText: {
-        fontSize: 13,
-        fontWeight: '700' as const,
+        fontSize: 14,
+        fontWeight: '800',
         color: '#FFFFFF',
     },
     infoCard: {
-        backgroundColor: Colors.surface,
+        backgroundColor: '#FFFFFF',
         marginHorizontal: 20,
-        borderRadius: 16,
-        padding: 4,
-        shadowColor: Colors.cardShadow,
+        borderRadius: 24,
+        padding: 24,
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 1,
-        shadowRadius: 12,
-        elevation: 4,
+        shadowOpacity: 0.05,
+        shadowRadius: 15,
+        elevation: 2,
     },
-    infoRow: {
+    infoItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 14,
     },
-    infoIconContainer: {
-        width: 40,
-        height: 40,
+    infoIconBox: {
+        width: 44,
+        height: 44,
         borderRadius: 12,
-        backgroundColor: 'rgba(13, 148, 136, 0.1)',
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: 14,
+        marginRight: 16,
     },
-    infoContent: {
+    infoRight: {
         flex: 1,
     },
     infoLabel: {
         fontSize: 12,
-        color: Colors.textSecondary,
+        color: '#94A3B8',
+        fontWeight: '600',
+        textTransform: 'none',
         marginBottom: 2,
     },
     infoValue: {
-        fontSize: 15,
-        fontWeight: '600' as const,
-        color: Colors.text,
+        fontSize: 17,
+        fontWeight: '700',
+        color: '#1E293B',
     },
-    separator: {
+    infoSeparator: {
         height: 1,
-        backgroundColor: Colors.border,
-        marginHorizontal: 14,
+        backgroundColor: '#F1F5F9',
+        marginVertical: 16,
     },
     menuSection: {
-        marginTop: 24,
+        marginTop: 32,
     },
     sectionTitle: {
-        fontSize: 14,
-        fontWeight: '600' as const,
-        color: Colors.textSecondary,
+        fontSize: 13,
+        fontWeight: '800',
+        color: '#475569',
         marginBottom: 12,
-        marginLeft: 20,
-        textTransform: 'uppercase' as const,
-        letterSpacing: 0.5,
+        marginLeft: 24,
+        letterSpacing: 1,
     },
     menuCard: {
-        backgroundColor: Colors.surface,
+        backgroundColor: '#FFFFFF',
         marginHorizontal: 20,
-        borderRadius: 16,
-        shadowColor: Colors.cardShadow,
+        borderRadius: 24,
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 1,
-        shadowRadius: 8,
-        elevation: 2,
+        shadowOpacity: 0.03,
+        shadowRadius: 10,
+        elevation: 1,
     },
     menuItem: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: 16,
+        padding: 18,
     },
     menuItemLeft: {
         flexDirection: 'row',
         alignItems: 'center',
         flex: 1,
     },
+    menuIconContainer: {
+        width: 40,
+        height: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     menuItemInfo: {
-        marginLeft: 14,
+        marginLeft: 12,
         flex: 1,
     },
     menuItemTitle: {
         fontSize: 16,
-        fontWeight: '500' as const,
-        color: Colors.text,
+        fontWeight: '600',
+        color: '#1E293B',
     },
     menuItemSubtitle: {
         fontSize: 13,
-        color: Colors.textSecondary,
+        color: '#64748B',
         marginTop: 2,
+    },
+    menuSeparator: {
+        height: 1,
+        backgroundColor: '#F1F5F9',
+        marginLeft: 60,
+    },
+    logoutCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#FFFFFF',
+        marginHorizontal: 20,
+        marginTop: 32,
+        padding: 18,
+        borderRadius: 20,
+        gap: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 10,
+        elevation: 1,
+    },
+    logoutText: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: Colors.error,
     },
     dangerText: {
         color: Colors.error,
     },
-    menuSeparator: {
-        height: 1,
-        backgroundColor: Colors.border,
-        marginLeft: 50,
-    },
     versionText: {
         fontSize: 13,
-        color: Colors.textLight,
+        color: '#94A3B8',
         textAlign: 'center',
         marginTop: 32,
     },

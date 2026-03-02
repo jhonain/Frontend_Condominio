@@ -16,3 +16,15 @@ export const goToRegisterPersonaUser = () => {
 export const goToHome = () => {
   router.replace('/(tabs)/(home)');
 };
+
+export const goToAvisos = () => {
+  router.push('/(tabs)/announcements');
+};
+
+export const goToVehiculo = () => {
+  router.push('/(tabs)/vehicles');
+};
+
+export const goToProfile = () => {
+  router.push('/(tabs)/profile');
+};

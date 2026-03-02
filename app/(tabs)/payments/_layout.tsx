@@ -1,9 +1,11 @@
+import Colors from "@/constants/Colors";
+import { useAuth } from "@/context/AuthContext";
 import { Stack } from "expo-router";
 import React from "react";
 
-import Colors from "@/constants/Colors";
-
 export default function PaymentsLayout() {
+  const { isAdmin } = useAuth();
+
   return (
     <Stack
       screenOptions={{
@@ -12,7 +14,7 @@ export default function PaymentsLayout() {
         },
         headerTintColor: Colors.text,
         headerTitleStyle: {
-          fontWeight: '600',
+          fontWeight: '700',
         },
         headerShadowVisible: false,
       }}
@@ -20,7 +22,7 @@ export default function PaymentsLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: "Mis Pagos",
+          headerTitle: isAdmin ? "Gestión de Cuotas" : "Mis Cuotas",
         }}
       />
     </Stack>
